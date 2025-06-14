@@ -6,55 +6,43 @@ from datetime import datetime, timezone
 
 class keybox:
     def __init__(self,path):
-        self.tree = ET.parse(path)
-        self.root = self.tree.getroot()
+        tree = ET.parse(path)
+        root = tree.getroot()
 
-        self.number_of_pem_certificates = int(self.root.find('.//NumberOfCertificates').text.strip())
-        self.pem_certificates = [cert.text.strip() for cert in self.root.findall('.//Certificate[@format="pem"]')[self.number_of_pem_certificates-1::-1]]
-        
-        self.certificate = x509.load_pem_x509_certificate(self.pem_certificates[0].encode(),default_backend())
+        number_of_pem_certificates = int(root.find('.//NumberOfCertificates').text.strip())
+        pem_certificates = [cert.text.strip() for cert in root.findall('.//Certificate[@format="pem"]')[number_of_pem_certificates-1::-1]]
 
-        self.keybox_parsed = (f"{self.certificate.subject}")
-        self.keybox_string = re.search(r"2\.5\.4\.5=([0-9a-fA-F]+)", self.keybox_parsed)
+        self.oid_values = []
+        self.certificate_serial_numbers = []
+        self.not_valid_before = []
+        self.not_valid_after = []
+        self.version = []
+        self.status = []
 
-        self.serial_number = self.certificate.serial_number
-        self.serial_number_string = hex(self.serial_number)[2:].lower()
-        self.subject = self.certificate.subject
-        self.not_valid_before = self.certificate.not_valid_before_utc
-        self.not_valid_after = self.certificate.not_valid_after_utc
-        self.current_date = datetime.now(timezone.utc)
+        for certificate_index in range(number_of_pem_certificates):
+            certificate = x509.load_pem_x509_certificate(pem_certificates[certificate_index].encode(),default_backend())
 
-    def oid_values(self,pem_certificate):
-        certificate = x509.load_pem_x509_certificate(self.pem_certificates[pem_certificate].encode(),default_backend())
+            certificate_oid_values = {}
+            for rdn in certificate.subject:
+                certificate_oid_values[rdn.oid._name] = rdn.value
+            self.oid_values += certificate_oid_values
 
-        oid_values = {}
-        for rdn in certificate.subject:
-            oid_values[rdn.oid._name] = rdn.value
+            self.certificate_serial_numbers += hex(certificate.serial_number)[2:].lower()
+            self.not_valid_before += certificate.not_valid_before_utc
+            self.not_valid_after += certificate.not_valid_after_utc
+            self.version += certificate.version
 
-        return oid_values
 
-    def certificate_serial_numbers(self,pem_certificate):
-        certificate = x509.load_pem_x509_certificate(self.pem_certificates[pem_certificate].encode(),default_backend())
-        return hex(certificate.serial_number)[2:].lower()
 
     def overall_status(self):
-        pass
-#generator
-    def status(self):
         pass
 
     def keychain(self):
         pass
 
-    def certificate_values(self,pem_certificate):
-        certificate = x509.load_pem_x509_certificate(self.pem_certificates[pem_certificate].encode(),default_backend())
-        return certificate.not_valid_before_utc, certificate.not_valid_after_utc, certificate.version
-
     def root_certificate(self):
         pass
 
-    def challenge_time(self):
-        return datetime.now(timezone.utc)
 
 keybox = keybox(r"C:\keybox\keybox.xml")
 
