@@ -2,7 +2,6 @@ import xml.etree.ElementTree as ET
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 import time
-import re
 from datetime import datetime, timezone
 import requests
 from cryptography.hazmat.primitives import hashes, serialization
@@ -75,9 +74,11 @@ class keybox:
             else:
                 self.overall_status.append('Expired and Revoked')
 
-
     def keybox_status(self):
-        pass
+        for state in self.overall_status:
+            if state in ('Expired','Revoked','Expired and Revoked'):
+                return state
+        return state
 
     def keychain(self):
         for certificate_index in range(self.number_of_pem_certificates - 1):
@@ -112,8 +113,12 @@ class keybox:
             if root_certificates[key] == root_certificate:
                 return key
         return 'Unknown/Software'
+    
+class gui:
+    def __init__(self):
+        pass
 
-keybox = keybox(r"C:\keybox\keybox.xml")
+keybox = keybox(r"keybox-checker\keybox\public0.xml")
 
 for i in range(keybox.number_of_pem_certificates):
     print(i)
@@ -130,3 +135,4 @@ for i in range(keybox.number_of_pem_certificates):
     print()
 print(keybox.root_certificate())
 print(keybox.keychain())
+print(keybox.keybox_status())
