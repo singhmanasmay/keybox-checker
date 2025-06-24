@@ -75,10 +75,19 @@ class keybox:
                 self.overall_status.append('Expired and Revoked')
 
     def keybox_status(self):
+        temp_state = []
         for state in self.overall_status:
-            if state in ('Expired','Revoked','Expired and Revoked'):
+            if state == 'Expired and Revoked':
                 return state
-        return state
+            if state in ('Expired','Revoked'):
+                if state not in temp_state:
+                    temp_state.append(state)
+        if len(temp_state) == 0:
+            return 'Active'
+        elif len(temp_state) == 1:
+            return temp_state[0]
+        else:
+            return 'Expired and Revoked'
 
     def keychain(self):
         for certificate_index in range(self.number_of_pem_certificates - 1):
@@ -118,21 +127,21 @@ class gui:
     def __init__(self):
         pass
 
-keybox = keybox(r"keybox-checker\keybox\public0.xml")
+keybox = keybox(r"keybox-checker\keybox\xobxes.xml")
 
 for i in range(keybox.number_of_pem_certificates):
     print(i)
-    print(keybox.serial_number[i])
+    print(f'{keybox.serial_number[i]=}')
     for key in keybox.oid_values[i]:
         print(f'{key}: {keybox.oid_values[i][key]}')
-    print(keybox.certificate_serial_numbers[i])
-    print(keybox.not_valid_before[i])
-    print(keybox.not_valid_after[i])
-    print(keybox.validity[i])
-    print(keybox.version[i])
-    print(keybox.status[i])
-    print(keybox.overall_status[i])
+    print(f'{keybox.certificate_serial_numbers[i]=}')
+    print(f'{keybox.not_valid_before[i]=}')
+    print(f'{keybox.not_valid_after[i]=}')
+    print(f'{keybox.validity[i]=}')
+    print(f'{keybox.version[i]=}')
+    print(f'{keybox.status[i]=}')
+    print(f'{keybox.overall_status[i]=}')
     print()
-print(keybox.root_certificate())
-print(keybox.keychain())
-print(keybox.keybox_status())
+print(f'{keybox.root_certificate()=}')
+print(f'{keybox.keychain()=}')
+print(f'{keybox.keybox_status()=}')
