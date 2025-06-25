@@ -6,6 +6,11 @@ from datetime import datetime, timezone
 import requests
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, ec
+import customtkinter as ctk
+import os
+import winaccent
+import pywinstyles
+from PIL import ImageColor
 
 root_certificates = {'Google Hardware Attestation': '-----BEGIN PUBLIC KEY-----\nMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAr7bHgiuxpwHsK7Qui8xU\nFmOr75gvMsd/dTEDDJdSSxtf6An7xyqpRR90PL2abxM1dEqlXnf2tqw1Ne4Xwl5j\nlRfdnJLmN0pTy/4lj4/7tv0Sk3iiKkypnEUtR6WfMgH0QZfKHM1+di+y9TFRtv6y\n//0rb+T+W8a9nsNL/ggjnar86461qO0rOs2cXjp3kOG1FEJ5MVmFmBGtnrKpa73X\npXyTqRxB/M0n1n/W9nGqC4FSYa04T6N5RIZGBN2z2MT5IKGbFlbC8UrW0DxW7AYI\nmQQcHtGl/m00QLVWutHQoVJYnFPlXTcHYvASLu+RhhsbDmxMgJJ0mcDpvsC4PjvB\n+TxywElgS70vE0XmLD+OJtvsBslHZvPBKCOdT0MS+tgSOIfga+z1Z1g7+DVagf7q\nuvmag8jfPioyKvxnK/EgsTUVi2ghzq8wm27ud/mIM7AY2qEORR8Go3TVB4HzWQgp\nZrt3i5MIlCaY504LzSRiigHCzAPlHws+W0rB5N+er5/2pJKnfBSDiCiFAVtCLOZ7\ngLiMm0jhO2B6tUXHI/+MRPjy02i59lINMRRev56GKtcd9qO/0kUJWdZTdA2XoS82\nixPvZtXQpUpuL12ab+9EaDK8Z4RHJYYfCT3Q5vNAXaiWQ+8PTWm2QgBR/bkwSWc+\nNpUFgNPN9PvQi8WEg5UmAGMCAwEAAQ==\n-----END PUBLIC KEY-----\n',
                         'AOSP Software Attestation(EC)': '-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE7l1ex+HA220Dpn7mthvsTWpdamgu\nD/9/SQ59dx9EIm29sa/6FsvHrcV30lacqrewLVQBXT5DKyqO107sSHVBpA==\n-----END PUBLIC KEY-----\n',
@@ -22,6 +27,19 @@ with requests.get(url, headers=headers, params=params) as response:
     if response.status_code != 200:
         raise Exception(f"Error fetching data: {response.status_code}")
     crl = response.json()
+
+def dark(color,factor):
+    """Convert a color to a darker shade by reducing RGB values by 40%.
+    
+    Args:
+        color: A hex color string (e.g. '#ffffff')
+    
+    Returns:
+        A hex color string representing the darker shade
+    """
+    rgb = list(ImageColor.getrgb(color))
+    rgb[0], rgb[1], rgb[2]= int(rgb[0]*factor), int(rgb[1]*factor), int(rgb[2]*factor)
+    return '#%02x%02x%02x' % tuple(rgb)
 
 class keybox:
     def __init__(self,path):
@@ -125,7 +143,68 @@ class keybox:
     
 class gui:
     def __init__(self):
-        pass
+        root = ctk.CTk()
+        width = 995
+        height = 560
+        root.geometry(f'{width}x{height}+{int((root.winfo_screenwidth()/2)-(width/2))}+{int((root.winfo_screenheight()/2)-(height/2))}')
+        root.configure(fg_color='#ffffff')
+        root.title('Keybox Checker')
+        root.iconbitmap(os.path.join(os.path.dirname(__file__),'icon.ico'))
+        ctk.set_appearance_mode("dark")
+
+        statuslabel=ctk.CTkLabel(root,
+                                height=10,
+                                width=400,
+                                anchor='e',
+                                padx=10,
+                                pady=0,
+                                font=('Segoe UI',16),
+                                text='juju',
+                                fg_color='#000000')
+        statuslabel.pack(side='bottom', fill='x')
+
+        entryframe= ctk.CTkFrame(root,
+                                border_color=winaccent.accent_normal,
+                                border_width=2,
+                                corner_radius=10,
+                                fg_color='black')
+        entryframe.pack(fill='x',side='bottom')
+
+        self.entry= ctk.CTkEntry(entryframe,
+                            text_color=winaccent.accent_normal, 
+                            placeholder_text_color=winaccent.accent_normal, 
+                            placeholder_text='bruh', 
+                            fg_color='black', 
+                            bg_color='#000001',
+                            border_color='black',
+                            font=('Segoe UI', 20),
+                            corner_radius=10)
+        self.entry.pack(side='left', fill='x', expand=True, padx=2, pady=2)
+        self.entry.bind('<KeyRelease>',self.path_update)
+        pywinstyles.set_opacity(self.entry, color='#000001')
+
+        browsebutton = ctk.CTkButton(entryframe,
+                                    text='Browse',
+                                    width=80,
+                                    height=28, 
+                                    text_color='black',
+                                    fg_color=winaccent.accent_normal, 
+                                    corner_radius=6,
+                                    hover_color=dark(winaccent.accent_normal,0.6), 
+                                    font=('Segoe UI',14),
+                                    command=self.browse_path)
+        browsebutton.pack(side='right',anchor='s', padx=6, pady=6)
+
+        root.mainloop()
+
+    def browse_path(self):
+        self.entry.insert(0,ctk.filedialog.askopenfilename(initialdir = "/", title = "Select a File", filetypes = (("Text files","*.txt*"),("all files","*.*"))))
+        self.path_update()
+
+    def path_update(self,x=None):
+        print(self.entry.get())
+
+gui()
 
 keybox = keybox(r"keybox-checker\keybox\xobxes.xml")
 
