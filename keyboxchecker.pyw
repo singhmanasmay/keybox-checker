@@ -178,8 +178,21 @@ def browse_path():
     path_update()
 
 def path_update(x=None):
-    class keybox_button:
-        pass
+    class keybox_button(ctk.CTkButton):
+        def __init__(self,keybox):
+            if keybox.keybox_status() == 'Active':
+                button_color = '#00ff00'
+            else:
+                button_color = '#ff0000'
+            super().__init__(master=keybox_list_frame,
+                            bg_color = '#000000',
+                            text = f'{os.path.basename(keybox.path)}\n{keybox.certificate_serial_numbers[0]}\n{keybox.keybox_status()}',
+                            text_color=button_color,
+                            anchor='center',
+                            width=999999,
+                            fg_color = dark(button_color,0.1),
+                            hover_color=dark(button_color,0.2))
+            self.pack(side='top',fill='both',expand=True,padx=5,pady=5)
 
     class certificate_label:
         pass
@@ -200,7 +213,6 @@ def path_update(x=None):
                 if os.path.isfile(os.path.join(entry.get(),subdir)):
                     try:
                         keyboxes.append(keybox(os.path.join(entry.get(),subdir)))
-                        print(subdir)
                     except: pass
             if len(keyboxes) == 0:
                 entryframe.configure(border_color='#ff0000')
@@ -214,6 +226,10 @@ def path_update(x=None):
     else:
         entryframe.configure(border_color='#ff0000')
         statuslabel.configure(text='Invalid directory',text_color='#ff0000')
+
+    for keybox_ in keyboxes:
+        globals()[keybox_.path] = keybox_button(keybox_)
+
 
 get_crl()
 
@@ -271,17 +287,17 @@ browse_button.pack(side='right',anchor='s', padx=6, pady=6)
 
 keybox_details_frame = ctk.CTkFrame(root,
                                     fg_color=dark('#00ff00',0.15)
-)
+                                    )
 keybox_details_frame.pack(side='left', fill='both', expand=True)
 
 keybox_list_frame = ctk.CTkScrollableFrame(root,
-                                    fg_color=dark('#ff0000',0.15)
-)
-keybox_list_frame.pack(side='right', fill='both', expand=True)
+                                            fg_color='#0000ff'
+                                            )
+keybox_list_frame.pack(side='right', fill='y')
 
 certificate_frame = ctk.CTkScrollableFrame(keybox_details_frame,
                                             fg_color='#000000'
-)
+                                            )
 certificate_frame.pack(side='left', fill='y', padx='10', pady='10')
 
 root.mainloop()
