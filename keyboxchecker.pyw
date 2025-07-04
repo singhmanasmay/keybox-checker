@@ -69,30 +69,50 @@ class keybox:
 
         self.certificate = []
         self.certificate_info =[]
+        self.certificate_info =[]
 
         for certificate_index in range(self.number_of_pem_certificates):
+            self.certificate_info.append({})
             self.certificate_info.append({})
             self.certificate.append(x509.load_pem_x509_certificate(pem_certificates[certificate_index].encode(),default_backend()))
 
             self.certificate_info[certificate_index]['Certificate Serial Number'] = hex(self.certificate[certificate_index].serial_number)[2:].lower()
+            self.certificate_info[certificate_index]['Certificate Serial Number'] = hex(self.certificate[certificate_index].serial_number)[2:].lower()
 
             self.certificate_info[certificate_index]['Not Valid Before'] = self.certificate[certificate_index].not_valid_before_utc.strftime('%Y-%m-%d %H:%M:%S')
+            self.certificate_info[certificate_index]['Not Valid Before'] = self.certificate[certificate_index].not_valid_before_utc.strftime('%Y-%m-%d %H:%M:%S')
 
+            self.certificate_info[certificate_index]['Not Valid After'] = self.certificate[certificate_index].not_valid_after_utc.strftime('%Y-%m-%d %H:%M:%S')
             self.certificate_info[certificate_index]['Not Valid After'] = self.certificate[certificate_index].not_valid_after_utc.strftime('%Y-%m-%d %H:%M:%S')
 
             if self.certificate[certificate_index].not_valid_before_utc <= datetime.now(timezone.utc) <= self.certificate[certificate_index].not_valid_after_utc:
                 self.certificate_info[certificate_index]['Validity'] = 'Valid'
+                self.certificate_info[certificate_index]['Validity'] = 'Valid'
             else:
                 self.certificate_info[certificate_index]['Validity'] = 'Expired'
+                self.certificate_info[certificate_index]['Validity'] = 'Expired'
 
+            self.certificate_info[certificate_index]['Encryption Algorithm'] = self.certificate[certificate_index].signature_algorithm_oid._name
             self.certificate_info[certificate_index]['Encryption Algorithm'] = self.certificate[certificate_index].signature_algorithm_oid._name
 
             if crl == None:
                 self.certificate_info[certificate_index]['Status'] = 'Unable to get crl response (Please check your internet)'
+                self.certificate_info[certificate_index]['Status'] = 'Unable to get crl response (Please check your internet)'
             else:
                 try:
                     self.certificate_info[certificate_index]['Status'] = f'{crl['entries'][self.certificate_info[certificate_index]['Certificate Serial Number']]['status'].title()} ({crl['entries'][self.certificate_info[certificate_index]['Certificate Serial Number']]['reason'].title().replace('_',' ')})'
+                    self.certificate_info[certificate_index]['Status'] = f'{crl['entries'][self.certificate_info[certificate_index]['Certificate Serial Number']]['status'].title()} ({crl['entries'][self.certificate_info[certificate_index]['Certificate Serial Number']]['reason'].title().replace('_',' ')})'
                 except: 
+                    self.certificate_info[certificate_index]['Status'] = 'Unrevoked'
+
+            certificate_oid_values = {}
+            for rdn in self.certificate[certificate_index].subject:
+                certificate_oid_values[rdn.oid._name] = rdn.value
+            if 'serialNumber' not in certificate_oid_values:
+                certificate_oid_values['Serial Number'] = 'Software or Invalid'
+            else:
+                certificate_oid_values['Serial Number'] = certificate_oid_values.pop('serialNumber')
+            self.certificate_info[certificate_index].update(certificate_oid_values)
                     self.certificate_info[certificate_index]['Status'] = 'Unrevoked'
 
             certificate_oid_values = {}
@@ -111,7 +131,15 @@ class keybox:
             if dict['Validity'] != 'Valid':
                 if dict['Validity'] not in temp_state:
                     temp_state.append(dict['Validity'])
+        for dict in self.certificate_info:
+            if dict['Validity'] != 'Valid':
+                if dict['Validity'] not in temp_state:
+                    temp_state.append(dict['Validity'])
 
+        for dict in self.certificate_info:
+            if dict['Status'] != 'Unrevoked':
+                if dict['Status'] not in temp_state:
+                    temp_state.append(dict['Status'])
         for dict in self.certificate_info:
             if dict['Status'] != 'Unrevoked':
                 if dict['Status'] not in temp_state:
@@ -171,16 +199,24 @@ def browse_path():
     path_update()
 
 @threaded
+@threaded
 def path_update(x=None):
     class keybox_button(ctk.CTkButton):
         def __init__(self,keybox):
             self.keybox = keybox
             if self.keybox.keybox_status() == 'Active' and keybox.keychain() == 'Valid':
                 self.button_color = '#7CFC00'
+            self.keybox = keybox
+            if self.keybox.keybox_status() == 'Active' and keybox.keychain() == 'Valid':
+                self.button_color = '#7CFC00'
             else:
+                self.button_color = '#ff0000'
                 self.button_color = '#ff0000'
             super().__init__(master=keybox_list_frame,
                             bg_color = '#000000',
+                            text = f'{os.path.basename(self.keybox.path)}',
+                            text_color=self.button_color,
+                            anchor='w',
                             text = f'{os.path.basename(self.keybox.path)}',
                             text_color=self.button_color,
                             anchor='w',
@@ -188,8 +224,56 @@ def path_update(x=None):
                             fg_color = dark(self.button_color,0.2),
                             hover_color=dark(self.button_color,0.4),
                             command=self.show_keybox_details)
+                            fg_color = dark(self.button_color,0.2),
+                            hover_color=dark(self.button_color,0.4),
+                            command=self.show_keybox_details)
             self.pack(side='top',fill='both',expand=True,padx=5,pady=5)
 
+        def show_keybox_details(self):
+            certificate_frame.pack(side='left', fill='y', padx=10, pady=10)
+            keybox_details_label.pack(side='right', fill='both', expand=True, pady=10)
+            keybox_details_frame.configure(fg_color=dark(self.button_color,0.2))
+            keybox_details_label.configure(text_color=self.button_color,text=f'Path: {self.keybox.path}\nKeychain: {self.keybox.keychain()}\nRoot Certificate: {self.keybox.root_certificate()}\nKeybox Status: {self.keybox.keybox_status()}')
+            certificate_chain_label = ctk.CTkLabel(master=certificate_frame,
+                                                    bg_color= '#000000',
+                                                    text='Certificate Keychain:',
+                                                    text_color='#ffffff',
+                                                    anchor='w',
+                                                    justify='left',
+                                                    width=999999,
+                                                    fg_color='#000000',
+                                                    corner_radius=6)
+            certificate_chain_label.pack(side='top',fill='both',expand=True)
+
+            class certificate_label(ctk.CTkLabel):
+                def __init__(self,dict):
+                    if dict['Validity'] == 'Valid' and dict['Status'] == 'Unrevoked':
+                        label_color = '#7CFC00'
+                    else:
+                        label_color = '#ff0000'
+                    text = '\n'
+                    for key in dict:
+                        text += f'{key}: {dict[key]}\n'
+                    super().__init__(master=certificate_frame,
+                                        bg_color= '#000000',
+                                        text=text,
+                                        text_color=label_color,
+                                        anchor='w',
+                                        justify='left',
+                                        width=999999,
+                                        fg_color=dark(label_color,0.2),
+                                        corner_radius=6)
+                    self.pack(side='top',fill='both',expand=True,padx=5,pady=5)
+
+            for dict in self.keybox.certificate_info:
+                globals()[dict['Serial Number']] = certificate_label(dict)
+
+    status_temp = statuslabel.cget('text')
+    if 'crl' not in globals():
+        statuslabel.configure(text='Fetching CRL data, please wait...',text_color='#7CFC00')
+    while 'crl' not in globals():
+        time.sleep(0.5)
+    statuslabel.configure(text=status_temp)
         def show_keybox_details(self):
             certificate_frame.pack(side='left', fill='y', padx=10, pady=10)
             keybox_details_label.pack(side='right', fill='both', expand=True, pady=10)
@@ -243,6 +327,8 @@ def path_update(x=None):
                 keyboxes.append(keybox(entry.get()))
                 entryframe.configure(border_color='#7CFC00')
                 statuslabel.configure(text='Valid keybox file',text_color='##7CFC00')
+                entryframe.configure(border_color='#7CFC00')
+                statuslabel.configure(text='Valid keybox file',text_color='##7CFC00')
             except:
                 entryframe.configure(border_color='#ff0000')
                 statuslabel.configure(text='Invalid keybox file',text_color='#ff0000')
@@ -258,12 +344,17 @@ def path_update(x=None):
             if len(keyboxes) == 1:
                 entryframe.configure(border_color='#7CFC00')
                 statuslabel.configure(text='1 valid keybox file found in directory',text_color='#7CFC00')
+                entryframe.configure(border_color='#7CFC00')
+                statuslabel.configure(text='1 valid keybox file found in directory',text_color='#7CFC00')
             else:
+                entryframe.configure(border_color='#7CFC00')
+                statuslabel.configure(text=f'{len(keyboxes)} valid keybox files found in directory',text_color='#7CFC00')
                 entryframe.configure(border_color='#7CFC00')
                 statuslabel.configure(text=f'{len(keyboxes)} valid keybox files found in directory',text_color='#7CFC00')
     else:
         entryframe.configure(border_color='#ff0000')
         statuslabel.configure(text='Invalid directory',text_color='#ff0000')
+    
     
     for keybox_ in keyboxes:
         globals()[keybox_.path] = keybox_button(keybox_)
@@ -276,6 +367,7 @@ width = 995
 height = 560
 root.geometry(f'{width}x{height}+{int((root.winfo_screenwidth()/2)-(width/2))}+{int((root.winfo_screenheight()/2)-(height/2))}')
 root.configure(fg_color="#000000")
+root.configure(fg_color="#000000")
 root.title('Keybox Checker')
 root.iconbitmap(os.path.join(os.path.dirname(__file__),'icon.ico'))
 ctk.set_appearance_mode("dark")
@@ -287,6 +379,7 @@ statuslabel=ctk.CTkLabel(root,
                         padx=10,
                         pady=0,
                         font=('Segoe UI',16),
+                        text='',
                         text='',
                         fg_color='#000000')
 statuslabel.pack(side='bottom', fill='x')
@@ -301,6 +394,7 @@ entryframe.pack(fill='x',side='bottom')
 entry= ctk.CTkEntry(entryframe,
                     text_color=winaccent.accent_normal, 
                     placeholder_text_color=winaccent.accent_normal, 
+                    placeholder_text='Input or browse a keybox file or folder path', 
                     placeholder_text='Input or browse a keybox file or folder path', 
                     fg_color='black', 
                     bg_color='#000001',
@@ -331,10 +425,19 @@ keybox_details_frame.pack_propagate(False)
 
 keybox_list_frame = ctk.CTkScrollableFrame(root,
                                             fg_color='#000000'
+                                            fg_color='#000000'
                                             )
 keybox_list_frame.pack(side='right', fill='y')
 
 certificate_frame = ctk.CTkScrollableFrame(keybox_details_frame,
+                                            fg_color='#000000',
+                                            width=400)
+
+keybox_details_label = ctk.CTkLabel(keybox_details_frame,
+                                    anchor='nw',
+                                    justify='left',
+                                    font=('Segoe UI', 20),
+                                    corner_radius=6)
                                             fg_color='#000000',
                                             width=400)
 
