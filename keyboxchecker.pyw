@@ -75,7 +75,6 @@ class keybox:
             else:
                 self.overall_status.append('Expired and Revoked')
 
-
     def keybox_status(self):
         pass
 
