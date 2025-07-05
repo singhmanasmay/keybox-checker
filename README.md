@@ -16,7 +16,7 @@ A Windows GUI application for validating Android keybox certificates and their a
 ## Installation
 
 1. Download the latest release from the [releases page](https://github.com/singhmanasmay/keybox-checker/releases)
-3. Run the downloaded file `Keybox Checker.exe`
+3. Run the downloaded file `Keybox-Checker.exe`
 
 Or run from source:
 
@@ -25,7 +25,7 @@ Or run from source:
 ```
 pip install -r requirements.txt
 ```
-3. Run `Keybox Checker.pyw`
+3. Run `Keybox-Checker.pyw`
 
 ## Requirements
 
