@@ -172,6 +172,12 @@ def browse_path():
 
 @threaded
 def path_update(x=None):
+    for child in keybox_list_frame.winfo_children():
+        child.destroy()
+    keybox_details_frame.configure(fg_color='#000000')
+    certificate_frame.pack_forget()
+    keybox_details_label.configure(text='')
+
     class keybox_button(ctk.CTkButton):
         def __init__(self,keybox):
             self.keybox = keybox
@@ -190,7 +196,14 @@ def path_update(x=None):
                             command=self.show_keybox_details)
             self.pack(side='top',fill='both',expand=True,padx=5,pady=5)
 
+            if len(keyboxes)==1:
+                self.show_keybox_details()
+
         def show_keybox_details(self):
+            for child in certificate_frame.winfo_children():
+                child.destroy()
+
+            keybox_details_label.pack_forget()
             certificate_frame.pack(side='left', fill='y', padx=10, pady=10)
             keybox_details_label.pack(side='right', fill='both', expand=True, pady=10)
             keybox_details_frame.configure(fg_color=dark(self.button_color,0.2))
@@ -198,7 +211,7 @@ def path_update(x=None):
             certificate_chain_label = ctk.CTkLabel(master=certificate_frame,
                                                     bg_color= '#000000',
                                                     text='Certificate Keychain:',
-                                                    text_color='#ffffff',
+                                                    text_color=winaccent.accent_normal,
                                                     anchor='w',
                                                     justify='left',
                                                     width=999999,
@@ -212,18 +225,20 @@ def path_update(x=None):
                         label_color = '#7CFC00'
                     else:
                         label_color = '#ff0000'
-                    text = '\n'
+                    text = ''
                     for key in dict:
                         text += f'{key}: {dict[key]}\n'
                     super().__init__(master=certificate_frame,
                                         bg_color= '#000000',
-                                        text=text,
+                                        text=text.removesuffix('\n'),
                                         text_color=label_color,
                                         anchor='w',
                                         justify='left',
                                         width=999999,
                                         fg_color=dark(label_color,0.2),
-                                        corner_radius=6)
+                                        corner_radius=6,
+                                        padx=5,
+                                        pady=10)
                     self.pack(side='top',fill='both',expand=True,padx=5,pady=5)
 
             for dict in self.keybox.certificate_info:
@@ -231,7 +246,7 @@ def path_update(x=None):
 
     status_temp = statuslabel.cget('text')
     if 'crl' not in globals():
-        statuslabel.configure(text='Fetching CRL data, please wait...',text_color='#7CFC00')
+        statuslabel.configure(text='Fetching CRL data, please wait...',text_color='#0096ff')
     while 'crl' not in globals():
         time.sleep(0.5)
     statuslabel.configure(text=status_temp)
@@ -242,7 +257,7 @@ def path_update(x=None):
             try:
                 keyboxes.append(keybox(entry.get()))
                 entryframe.configure(border_color='#7CFC00')
-                statuslabel.configure(text='Valid keybox file',text_color='##7CFC00')
+                statuslabel.configure(text='Valid keybox file',text_color='#7CFC00')
             except:
                 entryframe.configure(border_color='#ff0000')
                 statuslabel.configure(text='Invalid keybox file',text_color='#ff0000')
@@ -265,8 +280,10 @@ def path_update(x=None):
         entryframe.configure(border_color='#ff0000')
         statuslabel.configure(text='Invalid directory',text_color='#ff0000')
     
-    for keybox_ in keyboxes:
-        globals()[keybox_.path] = keybox_button(keybox_)
+    if keyboxes:
+        keybox_details_label.configure(text_color=winaccent.accent_normal,text='Select a keybox to view details')
+        for keybox_ in keyboxes:
+            globals()[keybox_.path] = keybox_button(keybox_)
 
 
 get_crl()
@@ -327,6 +344,7 @@ keybox_details_frame = ctk.CTkFrame(root,
                                     fg_color='#000000',
                                     )
 keybox_details_frame.pack(side='left', fill='both', expand=True)
+keybox_details_frame.pack_propagate(False)
 
 keybox_list_frame = ctk.CTkScrollableFrame(root,
                                             fg_color='#000000'
@@ -335,12 +353,16 @@ keybox_list_frame.pack(side='right', fill='y')
 
 certificate_frame = ctk.CTkScrollableFrame(keybox_details_frame,
                                             fg_color='#000000',
-                                            width=400)
+                                            width=450)
 
 keybox_details_label = ctk.CTkLabel(keybox_details_frame,
                                     anchor='nw',
                                     justify='left',
-                                    font=('Segoe UI', 20),
-                                    corner_radius=6)
+                                    font=('Segoe UI', 18),
+                                    corner_radius=6,
+                                    text='')
+keybox_details_label.pack(side='right', fill='both', expand=True, pady=10)
+keybox_details_label.bind('<Configure>', lambda e: keybox_details_label.configure(wraplength=keybox_details_label.winfo_width()-100))
+
 
 root.mainloop()
