@@ -14,6 +14,9 @@ from PIL import ImageColor
 import functools
 import threading
 import multiprocessing
+from screeninfo import get_monitors
+import ctypes
+
 
 root_certificates = {'Google Hardware Attestation': '-----BEGIN PUBLIC KEY-----\nMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAr7bHgiuxpwHsK7Qui8xU\nFmOr75gvMsd/dTEDDJdSSxtf6An7xyqpRR90PL2abxM1dEqlXnf2tqw1Ne4Xwl5j\nlRfdnJLmN0pTy/4lj4/7tv0Sk3iiKkypnEUtR6WfMgH0QZfKHM1+di+y9TFRtv6y\n//0rb+T+W8a9nsNL/ggjnar86461qO0rOs2cXjp3kOG1FEJ5MVmFmBGtnrKpa73X\npXyTqRxB/M0n1n/W9nGqC4FSYa04T6N5RIZGBN2z2MT5IKGbFlbC8UrW0DxW7AYI\nmQQcHtGl/m00QLVWutHQoVJYnFPlXTcHYvASLu+RhhsbDmxMgJJ0mcDpvsC4PjvB\n+TxywElgS70vE0XmLD+OJtvsBslHZvPBKCOdT0MS+tgSOIfga+z1Z1g7+DVagf7q\nuvmag8jfPioyKvxnK/EgsTUVi2ghzq8wm27ud/mIM7AY2qEORR8Go3TVB4HzWQgp\nZrt3i5MIlCaY504LzSRiigHCzAPlHws+W0rB5N+er5/2pJKnfBSDiCiFAVtCLOZ7\ngLiMm0jhO2B6tUXHI/+MRPjy02i59lINMRRev56GKtcd9qO/0kUJWdZTdA2XoS82\nixPvZtXQpUpuL12ab+9EaDK8Z4RHJYYfCT3Q5vNAXaiWQ+8PTWm2QgBR/bkwSWc+\nNpUFgNPN9PvQi8WEg5UmAGMCAwEAAQ==\n-----END PUBLIC KEY-----\n',
                         'AOSP Software Attestation(EC)': '-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE7l1ex+HA220Dpn7mthvsTWpdamgu\nD/9/SQ59dx9EIm29sa/6FsvHrcV30lacqrewLVQBXT5DKyqO107sSHVBpA==\n-----END PUBLIC KEY-----\n',
@@ -189,6 +192,7 @@ def path_update(x=None):
                             bg_color = '#000000',
                             text = f'{os.path.basename(self.keybox.path)}',
                             text_color=self.button_color,
+                            font=('Segoe UI', 16),
                             anchor='w',
                             width=999999,
                             fg_color = dark(self.button_color,0.2),
@@ -288,10 +292,17 @@ def path_update(x=None):
 
 get_crl()
 
+scale_factor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
+for monitor in get_monitors():
+    if monitor.is_primary:
+        screen_width = monitor.width/scale_factor
+        screen_height = monitor.height/scale_factor
+        break
+
 root = ctk.CTk()
-width = 995
-height = 560
-root.geometry(f'{width}x{height}+{int((root.winfo_screenwidth()/2)-(width/2))}+{int((root.winfo_screenheight()/2)-(height/2))}')
+width = int(screen_width*0.9)
+height = int(screen_height*0.7)
+root.geometry(f'{width}x{height}+{int((screen_width/2)-(width/2))}+{int((screen_height/2)-(height/2))}')
 root.configure(fg_color="#000000")
 root.title('Keybox Checker')
 root.iconbitmap(os.path.join(os.path.dirname(__file__),'icon.ico'))
@@ -342,27 +353,26 @@ browse_button.pack(side='right',anchor='s', padx=6, pady=6)
 
 keybox_details_frame = ctk.CTkFrame(root,
                                     fg_color='#000000',
-                                    )
+                                    corner_radius=14)
 keybox_details_frame.pack(side='left', fill='both', expand=True)
 keybox_details_frame.pack_propagate(False)
 
 keybox_list_frame = ctk.CTkScrollableFrame(root,
-                                            fg_color='#000000'
-                                            )
+                                            fg_color='#000000',
+                                            width=300)
 keybox_list_frame.pack(side='right', fill='y')
 
 certificate_frame = ctk.CTkScrollableFrame(keybox_details_frame,
                                             fg_color='#000000',
-                                            width=450)
+                                            width=450,
+                                            corner_radius=10)
 
 keybox_details_label = ctk.CTkLabel(keybox_details_frame,
                                     anchor='nw',
                                     justify='left',
                                     font=('Segoe UI', 18),
-                                    corner_radius=6,
                                     text='')
 keybox_details_label.pack(side='right', fill='both', expand=True, pady=10)
-keybox_details_label.bind('<Configure>', lambda e: keybox_details_label.configure(wraplength=keybox_details_label.winfo_width()-100))
-
+multiprocessed(keybox_details_label.bind('<Configure>', lambda e: keybox_details_label.configure(wraplength=keybox_details_label.winfo_width()-140)))
 
 root.mainloop()

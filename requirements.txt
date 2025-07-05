@@ -1,0 +1,15 @@
+cryptography
+xml
+time
+datetime
+requests
+customtkinter
+os
+winaccent
+pywinstyles
+screeninfo
+Pillow
+functools
+threading
+multiprocessing
+ctypes
