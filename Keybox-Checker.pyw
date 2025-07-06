@@ -180,6 +180,12 @@ def path_update(x=None):
     keybox_details_frame.configure(fg_color='#000000')
     certificate_frame.pack_forget()
     keybox_details_label.configure(text='')
+    selector_frame = ctk.CTkFrame(master=keybox_list_frame,
+                                    height=50,
+                                    width=300,
+                                    border_width=2,
+                                    border_color=winaccent.accent_normal,
+                                    fg_color='transparent')
 
     class keybox_button(ctk.CTkButton):
         def __init__(self,keybox):
@@ -194,7 +200,7 @@ def path_update(x=None):
                             text_color=self.button_color,
                             font=('Segoe UI', 16),
                             anchor='w',
-                            width=999999,
+                            height=40,
                             fg_color = dark(self.button_color,0.2),
                             hover_color=dark(self.button_color,0.4),
                             command=self.show_keybox_details)
@@ -206,6 +212,8 @@ def path_update(x=None):
         def show_keybox_details(self):
             for child in certificate_frame.winfo_children():
                 child.destroy()
+            
+            selector_frame.place(x=0,y=(self.winfo_y()/scale_factor)-5)
 
             keybox_details_label.pack_forget()
             certificate_frame.pack(side='left', fill='y', padx=10, pady=10)
@@ -374,5 +382,6 @@ keybox_details_label = ctk.CTkLabel(keybox_details_frame,
                                     text='')
 keybox_details_label.pack(side='right', fill='both', expand=True, pady=10)
 multiprocessed(keybox_details_label.bind('<Configure>', lambda e: keybox_details_label.configure(wraplength=keybox_details_label.winfo_width()-140)))
+
 
 root.mainloop()
