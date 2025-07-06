@@ -190,7 +190,13 @@ def path_update(x=None):
     class keybox_button(ctk.CTkButton):
         def __init__(self,keybox):
             self.keybox = keybox
-            if self.keybox.keybox_status() == 'Active' and keybox.keychain() == 'Valid':
+            if keybox.keychain() == 'Invalid':
+                self.button_color = "#dfdfdf"
+            elif 'Unable to get crl response (Please check your internet)' in keybox.keybox_status():
+                self.button_color = '#0096ff'
+            elif keybox.root_certificate() in ['AOSP Software Attestation(EC)', 'AOSP Software Attestation(RSA)']:
+                self.button_color = "#FFEA00"
+            elif self.keybox.keybox_status() == 'Active' and keybox.keychain() == 'Valid':
                 self.button_color = '#7CFC00'
             else:
                 self.button_color = '#ff0000'
@@ -233,7 +239,11 @@ def path_update(x=None):
 
             class certificate_label(ctk.CTkLabel):
                 def __init__(self,dict):
-                    if dict['Validity'] == 'Valid' and dict['Status'] == 'Unrevoked':
+                    if dict['Status'] == 'Unable to get crl response (Please check your internet)':
+                        label_color = '#0096ff'
+                    elif dict['Serial Number'] == 'Software or Invalid':
+                        label_color = "#FFEA00"
+                    elif dict['Validity'] == 'Valid' and dict['Status'] == 'Unrevoked':
                         label_color = '#7CFC00'
                     else:
                         label_color = '#ff0000'
