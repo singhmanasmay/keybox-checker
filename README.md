@@ -2,7 +2,7 @@
 
 A Windows GUI application for validating Android keybox certificates and their attestation chains. This tool helps verify the integrity and status of Android keybox files used for hardware attestation.
 
-
+![preview](preview.png)
 
 ## Features
 
